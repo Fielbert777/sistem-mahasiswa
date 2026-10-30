@@ -1,0 +1,77 @@
+# 3 container: frontend (Nginx + HTML) -> backend (Node.js API) -> db (PostgreSQL)
+# Versi image diatur lewat APP_VERSION (diisi otomatis oleh pipeline CI/CD).
+
+services:
+  db:
+    build: ./db
+    image: mhs-db:${APP_VERSION:-dev}
+    environment:
+      POSTGRES_DB: ${DB_NAME:-mahasiswa}
+      POSTGRES_USER: ${DB_USER:-mhs}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD wajib diisi di file env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - backend-net
+    healthcheck:
+      # -h 127.0.0.1: baru lolos setelah server utama listen TCP (bukan server sementara saat init).
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      target: runtime
+    image: mhs-backend:${APP_VERSION:-dev}
+    environment:
+      PORT: 3000
+      APP_VERSION: ${APP_VERSION:-dev}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-mahasiswa}
+      DB_USER: ${DB_USER:-mhs}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD wajib diisi di file env}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - frontend-net
+      - backend-net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      target: runtime
+    image: mhs-frontend:${APP_VERSION:-dev}
+    ports:
+      - "${FE_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - frontend-net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+networks:
+  frontend-net: {}
+  backend-net:
+    internal: true   # database tidak punya akses keluar dan hanya bisa dijangkau backend
+
+volumes:
+  db-data: {}

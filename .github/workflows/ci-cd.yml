@@ -1,0 +1,63 @@
+name: CI/CD Sistem Data Mahasiswa
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Satu deploy dalam satu waktu; run baru menunggu run sebelumnya selesai.
+concurrency:
+  group: mahasiswa-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  APP_VERSION: 1.0.${{ github.run_number }}
+
+jobs:
+  ci:
+    name: CI - lint, unit test, build, integration test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Jalankan pipeline CI
+        shell: pwsh
+        run: ./pipeline.ps1 -Mode ci -Version $env:APP_VERSION
+
+      - name: Simpan log pipeline
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-log-${{ env.APP_VERSION }}
+          path: .pipeline/*.log
+
+  cd:
+    name: CD - deploy ke server lokal
+    needs: ci
+    # Deploy hanya dari branch main (bukan dari pull request).
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    # Server lokal = mesin yang menjalankan GitHub self-hosted runner (Windows + Docker Desktop).
+    runs-on: [self-hosted, windows]
+    environment: production
+    timeout-minutes: 20
+    env:
+      # Di luar workspace agar env production & riwayat versi tidak terhapus oleh checkout.
+      MHS_DEPLOY_DIR: ${{ github.workspace }}\..\mhs-deploy
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Build & deploy ke production lokal
+        shell: powershell
+        run: ./pipeline.ps1 -Mode cd -Version $env:APP_VERSION
+
+      - name: Simpan log deploy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cd-log-${{ env.APP_VERSION }}
+          path: .pipeline/*.log

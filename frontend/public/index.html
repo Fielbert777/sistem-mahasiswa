@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistem Data Mahasiswa</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <h1>Sistem Data Mahasiswa</h1>
+      <span id="status" class="badge badge-wait">Memeriksa server...</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2 id="form-title">Tambah Mahasiswa</h2>
+      <form id="form-mhs" novalidate>
+        <input type="hidden" id="mhs-id">
+        <div class="grid">
+          <label>NIM
+            <input id="nim" name="nim" inputmode="numeric" maxlength="15" placeholder="contoh: 2201001" required>
+          </label>
+          <label>Nama Lengkap
+            <input id="nama" name="nama" maxlength="100" placeholder="contoh: Andi Pratama" required>
+          </label>
+          <label>Jurusan
+            <input id="jurusan" name="jurusan" maxlength="100" placeholder="contoh: Teknik Informatika" required>
+          </label>
+          <label>Angkatan
+            <input id="angkatan" name="angkatan" type="number" min="2000" max="2100" placeholder="contoh: 2024" required>
+          </label>
+        </div>
+        <p id="form-error" class="error" hidden></p>
+        <div class="actions">
+          <button type="submit" id="btn-submit" class="btn btn-primary">Simpan</button>
+          <button type="button" id="btn-cancel" class="btn" hidden>Batal</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="list-header">
+        <h2>Daftar Mahasiswa <span id="count" class="muted"></span></h2>
+        <input type="search" id="search" placeholder="Cari NIM, nama, atau jurusan..." aria-label="Cari mahasiswa">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>NIM</th><th>Nama</th><th>Jurusan</th><th>Angkatan</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <p id="empty" class="muted" hidden>Belum ada data mahasiswa.</p>
+    </section>
+  </main>
+
+  <footer class="container muted">
+    Frontend (Nginx) &rarr; Backend (Node.js) &rarr; Database (PostgreSQL) &middot; <span id="version">versi -</span>
+  </footer>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="js/app.js"></script>
+</body>
+</html>
