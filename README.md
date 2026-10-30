@@ -220,6 +220,7 @@ gh run watch
 | Run | Job CI (ubuntu-latest) | Job CD (self-hosted `laptop-lokal`) |
 |---|---|---|
 | #1 → v1.1.1 | ✅ 13/13 unit test, lint lulus, 8/8 integration test | ✅ deploy 1.0.2 → 1.1.1, 8/8 smoke test, data lama tetap ada |
+| #2 → v1.1.2 | ✅ sama seperti #1, actions v7 tanpa peringatan deprecated | ✅ deploy 1.1.1 → 1.1.2, log ter-upload sebagai artifact |
 
 ### Catatan & batasan
 - Job CD hanya bisa jalan saat runner di laptop menyala (lihat perintah di atas); jika mati,
