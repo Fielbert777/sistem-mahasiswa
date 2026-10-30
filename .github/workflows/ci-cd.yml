@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Jalankan pipeline CI
         shell: pwsh
@@ -31,10 +31,11 @@ jobs:
 
       - name: Simpan log pipeline
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ci-log-${{ env.APP_VERSION }}
           path: .pipeline/*.log
+          include-hidden-files: true
 
   cd:
     name: CD - deploy ke server lokal
@@ -50,7 +51,7 @@ jobs:
       MHS_DEPLOY_DIR: ${{ github.workspace }}\..\mhs-deploy
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Build & deploy ke production lokal
         # Lewat cmd agar ExecutionPolicy Windows tidak memblokir pipeline.ps1.
@@ -59,7 +60,8 @@ jobs:
 
       - name: Simpan log deploy
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cd-log-${{ env.APP_VERSION }}
           path: .pipeline/*.log
+          include-hidden-files: true

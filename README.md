@@ -177,12 +177,25 @@ Mematikan production (data tetap aman di volume; tambahkan `-v` untuk menghapus 
 docker compose -p mhs-prod --env-file .deploy/prod.env down
 ```
 
-### Menghubungkan ke GitHub Actions (opsional)
-1. Install Git, jadikan folder ini repository, push ke GitHub (branch `main`).
-2. Di repo GitHub: **Settings → Actions → Runners → New self-hosted runner** (Windows),
-   jalankan runner di laptop ini (yang sudah ada Docker Desktop).
-3. Setiap push ke `main`: job `ci` jalan di GitHub, lalu job `cd` men-deploy ke laptop ini.
-   Pull request hanya menjalankan CI (tanpa deploy).
+### CI/CD di GitHub Actions (sudah aktif)
+- Repository (private): https://github.com/Fielbert777/sistem-mahasiswa
+- Self-hosted runner **`laptop-lokal`** terpasang di `D:\actions-runner` (label `self-hosted, Windows, X64, docker`).
+- Setiap push ke `main`: job `ci` jalan di server GitHub (`ubuntu-latest`), lalu job `cd`
+  jalan di runner laptop ini dan men-deploy ke `http://localhost:8080`. Pull request hanya menjalankan CI.
+- Versi dari GitHub = `1.1.<nomor run>` (versi `1.0.x` = run pipeline lokal).
+- State deploy runner (env production, versi aktif, riwayat) ada di
+  `D:\actions-runner\_work\sistem-mahasiswa\mhs-deploy`.
+- Log tiap run bisa diunduh dari halaman run sebagai artifact `ci-log-<versi>` / `cd-log-<versi>`.
+
+Menyalakan runner (harus menyala agar job CD bisa jalan; hentikan dengan Ctrl+C):
+```bash
+powershell -NoProfile -ExecutionPolicy Bypass -File D:\actions-runner\start-runner.ps1
+```
+
+Memantau run terakhir dari terminal:
+```bash
+gh run watch
+```
 
 ---
 
@@ -203,9 +216,14 @@ docker compose -p mhs-prod --env-file .deploy/prod.env down
 | Workflow GitHub Actions | ✅ lolos `actionlint` (belum dijalankan di GitHub sungguhan) |
 | Uji manual di browser | ✅ tampilan tampil, status "online", tambah data via form berhasil |
 
+### Hasil di GitHub Actions
+| Run | Job CI (ubuntu-latest) | Job CD (self-hosted `laptop-lokal`) |
+|---|---|---|
+| #1 → v1.1.1 | ✅ 13/13 unit test, lint lulus, 8/8 integration test | ✅ deploy 1.0.2 → 1.1.1, 8/8 smoke test, data lama tetap ada |
+
 ### Catatan & batasan
-- Workflow GitHub Actions sudah divalidasi sintaksnya, tetapi **belum dijalankan di GitHub**
-  karena folder ini belum menjadi repository Git (Git belum terpasang di mesin ini).
+- Job CD hanya bisa jalan saat runner di laptop menyala (lihat perintah di atas); jika mati,
+  job CD berstatus *queued* sampai runner dinyalakan.
 - Smoke test production membuat lalu menghapus 1 data uji (NIM berawalan `9`) setiap deploy.
 - Image versi lama tidak dihapus otomatis; bersihkan sesekali dengan `docker image prune`
   atau `docker image rm mhs-backend:<versi-lama>`.
